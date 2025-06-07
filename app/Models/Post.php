@@ -35,3 +35,7 @@ class Post extends Model
         $this->increment('view_count');
     }
 }
+
+
+
+

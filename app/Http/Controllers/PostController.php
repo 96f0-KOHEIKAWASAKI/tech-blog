@@ -2,9 +2,148 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
-    //
+    /**
+     * 記事一覧表示
+     */
+    public function index()
+    {
+        // 公開済み記事を新しい順で取得
+        $posts = Post::published()
+                    ->latest()
+                    ->paginate(10);
+        
+        return view('posts.index', compact('posts'));
+    }
+
+    /**
+     * 記事詳細表示
+     */
+    public function show($slug)
+    {
+        // slugで記事を検索
+        $post = Post::where('slug', $slug)
+                   ->published()
+                   ->firstOrFail();
+        
+        // 閲覧数をインクリメント
+        $post->incrementViewCount();
+        
+        return view('posts.show', compact('post'));
+    }
+
+    /**
+     * 記事作成フォーム表示
+     */
+    public function create()
+    {
+        return view('posts.create');
+    }
+
+    /**
+     * 記事保存処理
+     */
+    public function store(Request $request)
+    {
+        // バリデーション
+        $validated = $request->validate([
+            'title' => 'required|max:255',
+            'excerpt' => 'required|max:500',
+            'content' => 'required',
+            'meta_description' => 'nullable|max:160',
+            'published' => 'boolean'
+        ]);
+
+        // スラッグ自動生成
+        $validated['slug'] = Str::slug($validated['title']);
+        
+        // 同じスラッグが存在する場合は数字を追加
+        $originalSlug = $validated['slug'];
+        $count = 1;
+        while (Post::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $originalSlug . '-' . $count;
+            $count++;
+        }
+
+        // 記事作成
+        $post = Post::create($validated);
+
+        return redirect()->route('posts.show', $post->slug)
+                        ->with('success', '記事を作成しました');
+    }
+
+    /**
+     * 記事編集フォーム表示
+     */
+    public function edit($slug)
+    {
+        $post = Post::where('slug', $slug)->firstOrFail();
+        
+        return view('posts.edit', compact('post'));
+    }
+
+    /**
+     * 記事更新処理
+     */
+    public function update(Request $request, $slug)
+    {
+        $post = Post::where('slug', $slug)->firstOrFail();
+
+        // バリデーション
+        $validated = $request->validate([
+            'title' => 'required|max:255',
+            'excerpt' => 'required|max:500',
+            'content' => 'required',
+            'meta_description' => 'nullable|max:160',
+            'published' => 'boolean'
+        ]);
+
+        // タイトルが変更された場合はスラッグも更新
+        if ($post->title !== $validated['title']) {
+            $newSlug = Str::slug($validated['title']);
+            
+            // 同じスラッグが存在する場合は数字を追加（自分以外）
+            $originalSlug = $newSlug;
+            $count = 1;
+            while (Post::where('slug', $newSlug)->where('id', '!=', $post->id)->exists()) {
+                $newSlug = $originalSlug . '-' . $count;
+                $count++;
+            }
+            
+            $validated['slug'] = $newSlug;
+        }
+
+        // 記事更新
+        $post->update($validated);
+
+        return redirect()->route('posts.show', $post->slug)
+                        ->with('success', '記事を更新しました');
+    }
+
+    /**
+     * 記事削除処理
+     */
+    public function destroy($slug)
+    {
+        $post = Post::where('slug', $slug)->firstOrFail();
+        $post->delete();
+
+        return redirect()->route('posts.index')
+                        ->with('success', '記事を削除しました');
+    }
+
+    /**
+     * 管理者用：全記事一覧（公開・非公開含む）
+     */
+    public function admin()
+    {
+        $posts = Post::latest()->paginate(10);
+        
+        return view('posts.admin', compact('posts'));
+    }
 }
