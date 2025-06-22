@@ -19,8 +19,7 @@
                     <p class="card-text">{{ $post->excerpt }}</p>
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-muted">
-                            {{ $post->created_at->format('Y年m月d日') }} 
-                            | 閲覧数: {{ number_format($post->view_count) }}回
+                            {{ $post->created_at->format('Y年m月d日') }}
                         </small>
                         <div>
                             @if($post->published)
@@ -33,28 +32,29 @@
                 </div>
             </div>
             @endforeach
-            
-            <!-- ページネーション -->
-            {{ $posts->links() }}
         @else
             <div class="alert alert-info">
                 <h4>記事がまだありません</h4>
                 <p>最初の記事を作成してみましょう！</p>
-                <a href="{{ route('posts.create') }}" class="btn btn-primary">記事を作成</a>
+                @auth
+                    <a href="{{ route('posts.create') }}" class="btn btn-primary">記事を作成</a>
+                @endauth
             </div>
         @endif
     </div>
     
     <div class="col-md-4">
+        @auth
         <div class="card">
             <div class="card-header">
                 <h5>クイックアクション</h5>
             </div>
             <div class="card-body">
                 <a href="{{ route('posts.create') }}" class="btn btn-primary w-100 mb-2">新しい記事を作成</a>
-                <a href="{{ route('posts.admin') }}" class="btn btn-outline-secondary w-100">管理画面</a>
+                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary w-100">ダッシュボード</a>
             </div>
         </div>
+        @endauth
     </div>
 </div>
 @endsection
