@@ -14,7 +14,7 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="{{ route('posts.index') }}">記事一覧</a>
                 <a class="nav-link" href="{{ route('posts.create') }}">記事作成</a>
-                <a class="nav-link" href="{{ route('posts.admin') }}">管理画面</a>
+                <!-- <!-- <a class="nav-link" href="{{ route('posts.admin') }}">管理画面</a> --> -->
             </div>
         </div>
     </nav>

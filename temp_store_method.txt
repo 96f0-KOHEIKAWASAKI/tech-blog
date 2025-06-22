@@ -1,0 +1,30 @@
+    public function store(Request $request)
+    {
+        // バリデーション
+        $validated = $request->validate([
+            'title' => 'required|max:255',
+            'excerpt' => 'required|max:500',
+            'content' => 'required',
+            'meta_description' => 'nullable|max:160',
+        ]);
+
+        // チェックボックスの処理（チェックされていない場合は false になる）
+        $validated['published'] = $request->has('published');
+
+        // スラッグ自動生成
+        $validated['slug'] = Str::slug($validated['title']);
+
+        // 同じスラッグが存在する場合は数字を追加
+        $originalSlug = $validated['slug'];
+        $count = 1;
+        while (Post::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $originalSlug . '-' . $count;
+            $count++;
+        }
+
+        // 記事作成
+        $post = Post::create($validated);
+
+        return redirect()->route('posts.show', $post->slug)
+            ->with('success', '記事が正常に作成されました。');
+    }
